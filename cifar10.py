@@ -12,20 +12,21 @@ def unpickle(file):
     fo.close()
     return dict
 
+
 batch_size = 50
 l_rate = 0.001
 
-cifar_coll = unpickle("F:\hamid-code\cifar-10-batches-py\data_batch_1")
+cifar_coll = unpickle("F:\DL-code\cifar-10-batches-py\data_batch_1")
 train_1 = cifar_coll[b'data']
 label_1 = cifar_coll[b'labels']
 train = np.array(train_1)
 train_label = np.array(label_1)
 
 for i in range(2, 6):
-    cifar_coll = unpickle("F:\hamid-code\cifar-10-batches-py\data_batch_" + str(i))
+    cifar_coll = unpickle("F:\DL-code\cifar-10-batches-py\data_batch_" + str(i))
     train = np.concatenate((train, cifar_coll[b'data']), axis=0)
     train_label = np.concatenate((train_label, cifar_coll[b'labels']), axis=0)
-cifar_test = unpickle("F:\hamid-code\cifar-10-batches-py\\test_batch")
+cifar_test = unpickle("F:\DL-code\cifar-10-batches-py\\test_batch")
 test = cifar_test[b'data']
 test_label = np.array(cifar_test[b'labels'])
 
@@ -59,8 +60,8 @@ model.add(layers.Dense(10, activation='softmax'))
 
 model.summary()
 
-model.compile(optimizer=optimizers.Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'] )
-output = model.fit(train, train_label, epochs=20, batch_size=50, validation_data=(test, test_label))
+model.compile(optimizer=optimizers.Adam(lr=l_rate), loss='categorical_crossentropy', metrics=['accuracy'])
+output = model.fit(train, train_label, epochs=20, batch_size=batch_size, validation_data=(test, test_label))
 test_loss, test_acc = model.evaluate(test, test_label)
 print('test_acc:', test_acc)
 
@@ -70,18 +71,16 @@ plt.plot(output.history['val_acc'], 'g')
 plt.xlabel("Num of epochs")
 plt.ylabel("Accuracy")
 plt.title("Training Accuracy vs Validation Accuracy")
-plt.legend(['train','validation'])
+plt.legend(['train', 'validation'])
 
 plt.figure(1)
-plt.plot(output.history['loss'],'r')
-plt.plot(output.history['val_loss'],'g')
+plt.plot(output.history['loss'], 'r')
+plt.plot(output.history['val_loss'], 'g')
 # plt.xticks(np.arange(0, 101, 2.0))
 # plt.rcParams['figure.figsize'] = (8, 6)
 plt.xlabel("Num of Epochs")
 plt.ylabel("Loss")
 plt.title("Training Loss vs Validation Loss")
-plt.legend(['train','validation'])
+plt.legend(['train', 'validation'])
 
 plt.show()
-
-
