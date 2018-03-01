@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
+from keras import models, layers
+from keras.utils import to_categorical
 
 def unpickle(file):
     import pickle
@@ -16,19 +18,34 @@ cifar_coll = unpickle("F:\hamid-code\cifar-10-batches-py\data_batch_1")
 train_1 = cifar_coll[b'data']
 label_1 = cifar_coll[b'labels']
 train = np.array(train_1)
-label = np.array(label_1)
+train_label = np.array(label_1)
 
 for i in range(2, 6):
     cifar_coll = unpickle("F:\hamid-code\cifar-10-batches-py\data_batch_" + str(i))
     train = np.concatenate((train, cifar_coll[b'data']), axis=0)
-    label = np.concatenate((label, cifar_coll[b'labels']), axis=0)
+    train_label = np.concatenate((train_label, cifar_coll[b'labels']), axis=0)
+cifar_test = unpickle("F:\hamid-code\cifar-10-batches-py\\test_batch")
+test = cifar_test[b'data']
+test_label = np.array(cifar_test[b'labels'])
 
 train = np.transpose(np.reshape(train, (50000, 3, 32, 32)), (0, 2, 3, 1))
-
+test = np.transpose(np.reshape(test, (10000, 3, 32, 32)), (0, 2, 3, 1))
+train_label = train_label.reshape((50000, 1))
+test_label = test_label.reshape((10000, 1))
+train = train.astype('float32') / 255
+train_label = to_categorical(train)
 print("train shape: ", train.shape)
+print("label shape: ", train_label.shape)
 
+# show a sample image from data
+# plt.imshow(train[20])
+# plt.show()
 
-
-plt.imshow(train[20])
-plt.show()
-
+model = models.Sequential()
+model.add(layers.Conv2D(64, (5, 5), activation='relu', input_shape=(32, 32, 3)))
+model.add(layers.MaxPooling2D((3, 3)))
+model.add(layers.Conv2D(64, (5, 5), activation='relu'))
+model.add(layers.MaxPooling2D(3, 3))
+model.add(layers.Flatten())
+model.add(layers.Dense(512, activation='relu'))
+model.add(layers.Dense(10, activation='softmax'))
