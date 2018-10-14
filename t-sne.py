@@ -9,7 +9,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from ggplot import ggplot, aes, geom_point, ggtitle
-
+import plotly
+import plotly.graph_objs as go
 
 
 def open_pickle(pickle_file):
@@ -44,31 +45,31 @@ df['label'] = [labels_dict[id] for id in model_id]
 
 print('Size of the dataframe: {}'.format(df.shape))
 
-pca = PCA(n_components=3)
+pca = PCA(n_components=2)
 pca_result = pca.fit_transform(df[feat_cols].values)
 
 df['pca_1'] = pca_result[:, 0]
 df['pca_2'] = pca_result[:, 1]
-df['pca_3'] = pca_result[:, 2]
+# df['pca_3'] = pca_result[:, 2]
 
 print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
 df_pca = df.copy()
-chart = ggplot(df_pca, aes(x = 'pca_1', y = 'pca_2', z = 'pca_3', color='label')) \
+chart = ggplot(df_pca, aes(x = 'pca_1', y = 'pca_2', color='label')) \
         + geom_point(size=75,alpha=0.8) \
         + ggtitle("First and Second Principal Components colored by digit")
 chart.show()
 
 
 time_start = time.time()
-tsne = TSNE(n_components=3, verbose=1, perplexity=40, n_iter=300)
+tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
 tsne_results = tsne.fit_transform(df[feat_cols].values)
 print('t-SNE done! Time elapsed: {} seconds'.format(time.time()-time_start))
 
 df_tsne = df.copy()
 df_tsne['x_tsne'] = tsne_results[:, 0]
 df_tsne['y_tsne'] = tsne_results[:, 1]
-df_tsne['z_tsne'] = tsne_results[:, 2]
-chart = ggplot( df_tsne, aes(x = 'x_tsne', y = 'y_tsne', z = 'z_tsne', color='label') ) \
+# df_tsne['z_tsne'] = tsne_results[:, 2]
+chart = ggplot( df_tsne, aes(x = 'x_tsne', y = 'y_tsne', color='label') ) \
         + geom_point(size=75,alpha=0.8) \
         + ggtitle("First and Second Principal Components colored by digit")
 chart.show()
