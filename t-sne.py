@@ -2,23 +2,18 @@ import os
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-import pickle
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+import utils
 from ggplot import ggplot, aes, geom_point, ggtitle
-
-
-def open_pickle(pickle_file):
-    with open(pickle_file, 'rb') as f:
-        pickle_data = pickle.load(f)
-    return pickle_data
 
 
 PATH = os.getcwd()
 LOG_DIR = PATH + '/project-tensorboard/log-1/'
+MODEL_DIR = os.path.join("F:/", "DL-code" ,"text2shape-data", "nrrd_256_filter_div_32_solid")
 
 
-embeddings = open_pickle(os.path.join("F:/", "DL-code", "text2shape-data" ,"shapenet", "shapenet-embeddings", "text_embeddings_train.p"))
+embeddings = utils.open_pickle(os.path.join("F:/", "DL-code", "text2shape-data" ,"shapenet", "shapenet-embeddings", "text_embeddings_train.p"))
 sample_tuple = embeddings['caption_embedding_tuples'][0]
 embedding_shape = list(sample_tuple[3].shape)
 assert len(embedding_shape) == 1
@@ -28,8 +23,17 @@ model_id = [item[2] for item in embeddings['caption_embedding_tuples']]
 print("embedding shape: ", np.shape(embedding_data))
 print("model_id shape: ", np.shape(model_id))
 
+# utils.resize_images(MODEL_DIR, model_id[0])
+thumb_dir = os.path.join(MODEL_DIR,"resize_models")
+image_data = utils.get_images(thumb_dir)
+# utils.write_sprite_image(os.path.join(thumb_dir, "sprite.png"), image_data)
+
+sprite = utils.images_to_sprite(np.array(image_data), os.path.join(thumb_dir, "sprite.jpg"))
+
+
 feat_cols = ['col' + str(i) for i in range(np.shape(embedding_data)[1])]
 df = pd.DataFrame(embedding_data, columns=feat_cols)
+
 
 
 """Reading categories to use it as a label for coloring/separating data on chart"""
