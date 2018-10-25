@@ -103,9 +103,9 @@ def write_metadata(filename, labels):
             :param shape: tensor of labels
     """
     with open(filename, 'w') as f:
-        f.write("Index\tLabel\n")
+        # f.write("Index\tLabel\n")
         for index, label in enumerate(labels):
-            f.write("{}\t{}\n".format(index, label))
+            f.write("{}\n".format(label))
 
     print('Metadata file saved in {}'.format(filename))
 

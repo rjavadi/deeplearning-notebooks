@@ -2,16 +2,15 @@ import os
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 import utils
 from tensorflow.contrib.tensorboard.plugins import projector
-from ggplot import ggplot, aes, geom_point, ggtitle
 
 
 PATH = os.getcwd()
-LOG_DIR = PATH + '/project-tensorboard/log-1/'
+LOG_DIR = PATH + '/project-tensorboard/log-1'
 MODEL_DIR = os.path.join("F:/", "DL-code" ,"text2shape-data", "nrrd_256_filter_div_32_solid")
+# METADATA_DIR = os.path.join('project-tensorboard', 'log-1', 'metadata.tsv')
+# SPRITE_DIR = os.path.join('project-tensorboard', 'log-1', 'sprite.jpg')
 
 
 embeddings = utils.open_pickle(os.path.join("F:/", "DL-code", "text2shape-data" ,"shapenet", "shapenet-embeddings", "text_embeddings_train.p"))
@@ -31,8 +30,6 @@ image_data = utils.get_images(thumb_dir)
 feat_cols = ['col' + str(i) for i in range(np.shape(embedding_data)[1])]
 df = pd.DataFrame(embedding_data, columns=feat_cols)
 
-
-
 """Reading categories to use it as a label for coloring/separating data on chart"""
 labels_df = pd.read_csv(os.path.join("F:/", "DL-code", "text2shape-data", "captions.csv"), usecols=['modelId', 'category'])
 
@@ -45,32 +42,36 @@ for i in range(len(captions_dict)):
     if captions_dict[i]['modelId'] in model_id:
         labels_dict[captions_dict[i]['modelId']] = captions_dict[i]['category']
 
+# TODO: rewrite images and create sprites again. compare your code with github sample of t-sne.
 
 # the order of labels and models is preserved
 df['label'] = [labels_dict[id] for id in model_id]
 
 print('Size of the dataframe: {}'.format(df.shape))
 
-utils.write_metadata(os.path.join(thumb_dir, "metadata.tsv"), df['label'])
+utils.write_metadata(os.path.join(LOG_DIR, "metadata.tsv"), df['label'])
 
-with tf.Session() as sess:
+# with tf.Session() as sess:
     # assign the tensor that we want to visualize to the embedding variable
-    embedding_var = tf.Variable(np.shape(embedding_data), name="embedding")
-    sess.run(embedding_var.initializer)
-    init = tf.global_variables_initializer()
-    init.run()
-    config = projector.ProjectorConfig()
-    config.model_checkpoint_path = os.path.join(PATH, "tsne", 'my-model.ckpt')
-    embedding = config.embeddings.add()
-    embedding.tensor_name = embedding_var.name
-    embedding.metadata_path = os.path.join(os.path.join(thumb_dir, "metadata.tsv"))
-    embedding.sprite.image_path = os.path.join(thumb_dir, "sprite.jpg")
-    embedding.sprite.single_image_dim.extend([utils.img_w, utils.img_h])
-    summary_writer = tf.summary.FileWriter(LOG_DIR)
-    projector.visualize_embeddings(summary_writer, config)
-    saver_embed = tf.train.Saver([embedding_var])
-    saver_embed.save(sess, os.path.join(PATH, "tsne", 'my-model.ckpt'))
-    sess.run(embedding_var)
+embedding_var = tf.Variable(np.array(embedding_data), name="T2S_embedding")
+summary_writer = tf.summary.FileWriter(LOG_DIR)
+config = projector.ProjectorConfig()
+embedding = config.embeddings.add()
+config.model_checkpoint_path = os.path.join(LOG_DIR, 't2s.ckpt')
+embedding.tensor_name = embedding_var.name
+embedding.metadata_path = "metadata.tsv"
+embedding.sprite.image_path = "sprite.jpg"
+embedding.sprite.single_image_dim.extend([utils.img_w, utils.img_h])
+
+projector.visualize_embeddings(summary_writer, config)
+
+sess = tf.InteractiveSession()
+sess.run(tf.global_variables_initializer())
+saver_embed = tf.train.Saver()
+saver_embed.save(sess, os.path.join(LOG_DIR, 't2s.ckpt'))
+
+
+
 
 
 
