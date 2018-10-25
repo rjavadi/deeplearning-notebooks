@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 import utils
+from tensorflow.contrib.tensorboard.plugins import projector
 from ggplot import ggplot, aes, geom_point, ggtitle
 
 
@@ -23,12 +24,8 @@ model_id = [item[2] for item in embeddings['caption_embedding_tuples']]
 print("embedding shape: ", np.shape(embedding_data))
 print("model_id shape: ", np.shape(model_id))
 
-# utils.resize_images(MODEL_DIR, model_id[0])
 thumb_dir = os.path.join(MODEL_DIR,"resize_models")
 image_data = utils.get_images(thumb_dir)
-# utils.write_sprite_image(os.path.join(thumb_dir, "sprite.png"), image_data)
-
-sprite = utils.images_to_sprite(np.array(image_data), os.path.join(thumb_dir, "sprite.jpg"))
 
 
 feat_cols = ['col' + str(i) for i in range(np.shape(embedding_data)[1])]
@@ -54,37 +51,27 @@ df['label'] = [labels_dict[id] for id in model_id]
 
 print('Size of the dataframe: {}'.format(df.shape))
 
+utils.write_metadata(os.path.join(thumb_dir, "metadata.tsv"), df['label'])
 
-# Apply PCA transform
-pca = PCA(n_components=2)
-pca_result = pca.fit_transform(df[feat_cols].values)
+with tf.Session() as sess:
+    # assign the tensor that we want to visualize to the embedding variable
+    embedding_var = tf.Variable(np.shape(embedding_data), name="embedding")
+    sess.run(embedding_var.initializer)
+    init = tf.global_variables_initializer()
+    init.run()
+    config = projector.ProjectorConfig()
+    config.model_checkpoint_path = os.path.join(PATH, "tsne", 'my-model.ckpt')
+    embedding = config.embeddings.add()
+    embedding.tensor_name = embedding_var.name
+    embedding.metadata_path = os.path.join(os.path.join(thumb_dir, "metadata.tsv"))
+    embedding.sprite.image_path = os.path.join(thumb_dir, "sprite.jpg")
+    embedding.sprite.single_image_dim.extend([utils.img_w, utils.img_h])
+    summary_writer = tf.summary.FileWriter(LOG_DIR)
+    projector.visualize_embeddings(summary_writer, config)
+    saver_embed = tf.train.Saver([embedding_var])
+    saver_embed.save(sess, os.path.join(PATH, "tsne", 'my-model.ckpt'))
+    sess.run(embedding_var)
 
-df['pca_1'] = pca_result[:, 0]
-df['pca_2'] = pca_result[:, 1]
-# df['pca_3'] = pca_result[:, 2]
-
-print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
-df_pca = df.copy()
-chart = ggplot(df_pca, aes(x = 'pca_1', y = 'pca_2', color='label')) \
-        + geom_point(size=75,alpha=0.8) \
-        + ggtitle("First and Second Principal Components colored by digit")
-chart.show()
-
-
-tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
-tsne_results = tsne.fit_transform(df[feat_cols].values)
-
-df_tsne = df.copy()
-df_tsne['x_tsne'] = tsne_results[:, 0]
-df_tsne['y_tsne'] = tsne_results[:, 1]
-# df_tsne['z_tsne'] = tsne_results[:, 2]
-chart = ggplot( df_tsne, aes(x = 'x_tsne', y = 'y_tsne', color='label') ) \
-        + geom_point(size=75,alpha=0.8) \
-        + ggtitle("First and Second Principal Components colored by digit")
-chart.show()
-
-
-summary_writer = tf.summary.FileWriter(LOG_DIR)
 
 
 

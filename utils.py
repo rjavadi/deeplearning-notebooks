@@ -33,8 +33,9 @@ def get_images(img_dir):
     img_data = []
     images_list = os.listdir(img_dir)
     for name in images_list:
-        path = os.path.join(img_dir, name)
-        img_data.append(np.array(Image.open(path)))
+        if name.__contains__('.png'):
+            path = os.path.join(img_dir, name)
+            img_data.append(np.array(Image.open(path)))
     return img_data
 
 
@@ -95,6 +96,18 @@ def images_to_sprite(data, path_to_sprite):
     return data
 
 
+def write_metadata(filename, labels):
+    """
+            Create a metadata file image consisting of sample indices and labels
+            :param filename: name of the file to save on disk
+            :param shape: tensor of labels
+    """
+    with open(filename, 'w') as f:
+        f.write("Index\tLabel\n")
+        for index, label in enumerate(labels):
+            f.write("{}\t{}\n".format(index, label))
+
+    print('Metadata file saved in {}'.format(filename))
 
 
 
