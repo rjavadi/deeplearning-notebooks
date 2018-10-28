@@ -51,30 +51,19 @@ print('Size of the dataframe: {}'.format(df.shape))
 
 utils.write_metadata(os.path.join(LOG_DIR, "metadata.tsv"), df['label'])
 
-# with tf.Session() as sess:
+with tf.Session() as sess:
     # assign the tensor that we want to visualize to the embedding variable
-embedding_var = tf.Variable(np.array(embedding_data), name="T2S_embedding")
-summary_writer = tf.summary.FileWriter(LOG_DIR)
-config = projector.ProjectorConfig()
-embedding = config.embeddings.add()
-config.model_checkpoint_path = os.path.join(LOG_DIR, 't2s.ckpt')
-embedding.tensor_name = embedding_var.name
-embedding.metadata_path = "metadata.tsv"
-embedding.sprite.image_path = "sprite.jpg"
-embedding.sprite.single_image_dim.extend([utils.img_w, utils.img_h])
+    config = projector.ProjectorConfig()
+    embedding = config.embeddings.add()
+    embedding.metadata_path = "metadata.tsv"
+    embedding_var = tf.Variable(np.array(embedding_data), name="T2S_embedding")
+    embedding.tensor_name = embedding_var.name
+    sess.run(embedding_var.initializer)
+    summary_writer = tf.summary.FileWriter(LOG_DIR)
+    # config.model_checkpoint_path = os.path.join(LOG_DIR, 't2s.ckpt')
+    embedding.sprite.image_path = "sprite.jpg"
+    embedding.sprite.single_image_dim.extend([utils.img_w, utils.img_h])
+    projector.visualize_embeddings(summary_writer, config)
 
-projector.visualize_embeddings(summary_writer, config)
-
-sess = tf.InteractiveSession()
-sess.run(tf.global_variables_initializer())
-saver_embed = tf.train.Saver()
-saver_embed.save(sess, os.path.join(LOG_DIR, 't2s.ckpt'))
-
-
-
-
-
-
-
-
-
+    saver = tf.train.Saver({"T2S_embedding": embedding_var})
+    saver.save(sess, os.path.join(LOG_DIR, 't2s_features'))
