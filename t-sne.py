@@ -42,7 +42,6 @@ for i in range(len(captions_dict)):
     if captions_dict[i]['modelId'] in model_id:
         labels_dict[captions_dict[i]['modelId']] = captions_dict[i]['category']
 
-# TODO: rewrite images and create sprites again. compare your code with github sample of t-sne.
 
 # the order of labels and models is preserved
 df['label'] = [labels_dict[id] for id in model_id]
@@ -60,7 +59,6 @@ with tf.Session() as sess:
     embedding.tensor_name = embedding_var.name
     sess.run(embedding_var.initializer)
     summary_writer = tf.summary.FileWriter(LOG_DIR)
-    # config.model_checkpoint_path = os.path.join(LOG_DIR, 't2s.ckpt')
     embedding.sprite.image_path = "sprite.jpg"
     embedding.sprite.single_image_dim.extend([utils.img_w, utils.img_h])
     projector.visualize_embeddings(summary_writer, config)
